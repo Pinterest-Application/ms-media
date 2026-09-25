@@ -11,5 +11,4 @@ public class MsMediaApplication {
     public static void main(String[] args) {
         SpringApplication.run(MsMediaApplication.class, args);
     }
-
 }
