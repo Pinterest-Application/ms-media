@@ -29,21 +29,15 @@
                 <constraints nullable="false"/>
             </column>
 
-            <column name="file_size" type="bigint">
-                <constraints nullable="false"/>
-            </column>
+            <column name="file_size" type="bigint"/>
 
-            <column name="width" type="int">
-                <constraints nullable="false"/>
-            </column>
+            <column name="width" type="int"/>
 
-            <column name="height" type="int">
-                <constraints nullable="false"/>
-            </column>
+            <column name="height" type="int"/>
 
             <column name="original_file_name" type="varchar(255)"/>
 
-            <column name="is_active" type="boolean" defaultValueBoolean="true">
+            <column name="is_active" type="boolean" defaultValueBoolean="false">
                 <constraints nullable="false"/>
             </column>
 
