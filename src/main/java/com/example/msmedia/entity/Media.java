@@ -31,13 +31,13 @@ public class Media {
     @Column(name = "media_type", nullable = false, length = 50)
     private String mediaType;
 
-    @Column(name = "file_size", nullable = false)
+    @Column(name = "file_size")
     private Long fileSize;
 
-    @Column(name = "width", nullable = false)
+    @Column(name = "width")
     private Integer width;
 
-    @Column(name = "height", nullable = false)
+    @Column(name = "height")
     private Integer height;
 
     @Column(name = "original_file_name")
@@ -45,7 +45,7 @@ public class Media {
 
     @Builder.Default
     @Column(name = "is_active", nullable = false)
-    private Boolean isActive = true;
+    private Boolean isActive = false;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

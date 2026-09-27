@@ -13,4 +13,6 @@ public interface MediaRepository extends JpaRepository<Media, UUID> {
     boolean existsByObjectKey(String objectKey);
 
     Optional<Media> findByIdAndIsActiveTrue(UUID id);
+
+    Optional<Media> findByObjectKey(String objectKey);
 }
