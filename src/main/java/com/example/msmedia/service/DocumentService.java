@@ -1,6 +1,5 @@
 package com.example.msmedia.service;
 
-import com.example.libexception.exception.InternalServerErrorException;
 import com.example.msmedia.dto.PreSignedDownloadUrlRequest;
 import com.example.msmedia.dto.PreSignedDownloadUrlResponse;
 import com.example.msmedia.dto.PreSignedUrlRequest;
@@ -14,12 +13,9 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
-import java.util.HexFormat;
-import java.util.UUID;
+
+import static com.example.msmedia.util.DocumentUtil.generateObjectKey;
 
 @Service
 @RequiredArgsConstructor
@@ -73,27 +69,4 @@ public class DocumentService {
                 .build();
     }
 
-    private String generateObjectKey(String userId, String extension) {
-        String userFolder = hashSha256(userId).substring(0, 16);
-        String fileHash = UUID.randomUUID().toString().replace("-", "");
-
-        return String.format("%s/%s/%s/%s/%s%s",
-                userFolder,
-                fileHash.substring(0, 2),
-                fileHash.substring(2, 4),
-                fileHash.substring(4, 6),
-                fileHash,
-                extension
-        );
-    }
-
-    private String hashSha256(String input) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new InternalServerErrorException("SHA-256 algorithm unavailable");
-        }
-    }
 }

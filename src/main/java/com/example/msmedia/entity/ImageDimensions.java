@@ -1,4 +1,4 @@
-package com.example.msmedia.dto;
+package com.example.msmedia.entity;
 
 import lombok.*;
 

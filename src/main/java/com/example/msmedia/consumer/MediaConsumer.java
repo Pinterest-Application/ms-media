@@ -1,7 +1,9 @@
 package com.example.msmedia.consumer;
 
-import com.example.msmedia.dto.ImageDimensions;
+import com.example.msmedia.entity.ImageDimensions;
 import com.example.msmedia.entity.Media;
+import com.example.msmedia.entity.ParsedPath;
+import com.example.msmedia.exception.MediaStorageException;
 import com.example.msmedia.repository.MediaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +16,7 @@ import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -21,10 +24,12 @@ import javax.imageio.stream.ImageInputStream;
 import java.io.IOException;
 import java.util.Iterator;
 
+import static com.example.msmedia.util.DocumentUtil.parsePath;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class MediaEventListener {
+public class MediaConsumer {
 
     private final MediaRepository mediaRepository;
     private final S3Client s3Client;
@@ -32,7 +37,7 @@ public class MediaEventListener {
     @Transactional
     @KafkaListener(topics = "seaweedfs_events", groupId = "ms-media-group")
     public void consumeMediaEvent(ConsumerRecord<String, byte[]> record) {
-        String fullPath = record.key(); // Məs: /buckets/media/userFolder/12/34/56/uuid.jpg
+        String fullPath = record.key(); // get bucket full path
 
         if (fullPath == null || !fullPath.startsWith("/buckets/")) {
             return;
@@ -53,26 +58,25 @@ public class MediaEventListener {
                 return;
             }
 
-            Media media = mediaRepository.findByObjectKey(parsedPath.objectKey())
+            Media media = mediaRepository.findByObjectKey(parsedPath.getObjectKey())
                     .orElse(null);
 
             if (media == null) {
-                log.warn("Media bazada tapılmadı: {}", parsedPath.objectKey());
+                log.warn("Media not found in the database: {}", parsedPath.getObjectKey());
                 return;
             }
 
-            ImageDimensions dimensions = extractDimensions(parsedPath.bucket(), parsedPath.objectKey());
+            ImageDimensions dimensions = extractDimensions(parsedPath.getBucket(), parsedPath.getObjectKey());
 
             media.setFileSize(fileSize);
             media.setWidth(dimensions.getWidth());
             media.setHeight(dimensions.getHeight());
-            media.setIsActive(true);
+            media.setIsActive(true); // status is active
 
             mediaRepository.save(media);
-            log.info("Media uğurla aktivləşdirildi: id={}, key={}", media.getId(), media.getObjectKey());
-
+            log.info("Media activated successfully: id={}, key={}", media.getId(), media.getObjectKey());
         } catch (Exception e) {
-            log.error("SeaweedFS hadisəsi emal edilərkən xəta baş verdi: path={}, xəta={}", fullPath, e.getMessage(), e);
+            log.error("An error occurred while processing the SeaweedFS event: path={}, error={}", fullPath, e.getMessage(), e);
         }
     }
 
@@ -90,30 +94,33 @@ public class MediaEventListener {
             }
 
             Iterator<ImageReader> readers = ImageIO.getImageReaders(imageStream);
+
             if (readers.hasNext()) {
                 ImageReader reader = readers.next();
+
                 try {
                     reader.setInput(imageStream, true, true);
+
                     int width = reader.getWidth(0);
                     int height = reader.getHeight(0);
+
                     return new ImageDimensions(width, height);
                 } finally {
                     reader.dispose();
                 }
             }
+
+        } catch (S3Exception e) {
+            throw new MediaStorageException(
+                    "Failed to retrieve media from storage: " + objectKey);
         } catch (IOException e) {
-            log.warn("Şəkil ölçüləri çıxarıla bilmədi (fayl formatı və ya şəbəkə xətası): {}", objectKey);
+            log.warn(
+                    "Failed to extract image dimensions (invalid file format or I/O error): {}",
+                    objectKey,
+                    e
+            );
         }
+
         return new ImageDimensions(null, null);
     }
-
-    private ParsedPath parsePath(String fullPath) {
-        String[] parts = fullPath.split("/", 4);
-        if (parts.length < 4) {
-            return null;
-        }
-        return new ParsedPath(parts[2], parts[3]);
-    }
-
-    private record ParsedPath(String bucket, String objectKey) {}
 }
