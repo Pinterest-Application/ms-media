@@ -31,7 +31,7 @@ spring:
         jwt:
           issuer-uri: ${issuer-uri}
   kafka:
-    bootstrap-servers: coolify.tail1270a7.ts.net:9094
+    bootstrap-servers: ${kafka-url}
     consumer:
       group-id: ms-media-group
       auto-offset-reset: latest
