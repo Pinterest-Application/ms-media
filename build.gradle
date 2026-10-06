@@ -34,6 +34,12 @@ dependencies {
     implementation "org.mapstruct:mapstruct:${mapstructVersion}"
     implementation 'org.springframework.boot:spring-boot-starter-liquibase'
     implementation 'org.liquibase:liquibase-core'
+    implementation 'software.amazon.awssdk:s3:2.25.16'
+
+
+    implementation 'com.seaweedfs:seaweedfs-client:3.80'
+    implementation 'org.springframework.boot:spring-boot-starter-kafka'
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
 
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
