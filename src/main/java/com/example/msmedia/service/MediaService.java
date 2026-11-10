@@ -21,6 +21,7 @@ public class MediaService {
     private final DocumentService documentService;
 
     @Transactional(readOnly = true)
+    // todo cache
     public MediaResponse getById(UUID id) {
         return mediaRepository.findByIdAndIsActiveTrue(id)
                 .map(mediaMapper::toResponse)
